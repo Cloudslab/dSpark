@@ -8,12 +8,14 @@ public class DSpark {
 
 	static int deadline;
 	static double profileTime;
-	static double deadlineThreshold=1.10;
+	static double deadlineThreshold=1.50;
+	static int inputRatio=10;
 	
 	
 	//Algorithm for Deadline-aware spark applications with optimized cluster usage 
 	static void DSparkAlgo()
 	{
+		Configurations bestConfig=new Configurations();
 		//profile the application with the given profiler inputs
 		//generate completion time of the application with each configuration
 		Profile profileObj = new Profile();
@@ -39,7 +41,7 @@ public class DSpark {
 		
 		for(int i=0;i<Profiler.configList.size();i++)
 		{
-			double totalTime = (Profiler.configList.get(i).getCompletionTime()+profileTime)*deadlineThreshold;
+			double totalTime = (Profiler.configList.get(i).getCompletionTime()*deadlineThreshold+profileTime);
 			System.out.println("Total Time: "+totalTime);
 			if(totalTime>deadline)
 			{
@@ -53,6 +55,31 @@ public class DSpark {
 		Profiler.printConfigList();
 		//Now we only have the configurations that meet the deadline
 		//select the one which uses least amount of resources
+		bestConfig=Profiler.configList.get(0);
+		for(int i=1;i<Profiler.configList.size();i++)
+		{
+			if(Profiler.configList.get(i).getTotalCores()<bestConfig.getTotalCores())
+			{
+				bestConfig=Profiler.configList.get(i);
+			}
+			else if(Profiler.configList.get(i).getTotalCores()==bestConfig.getTotalCores())
+			{
+				if(Profiler.configList.get(i).getTotalMemory()<bestConfig.getTotalMemory())
+				{
+					bestConfig=Profiler.configList.get(i);
+				}
+				else if(Profiler.configList.get(i).getTotalMemory()==bestConfig.getTotalMemory())
+				{
+					if(Profiler.configList.get(i).getCompletionTime()<bestConfig.getCompletionTime())
+					{
+						bestConfig=Profiler.configList.get(i);
+					}
+				}
+			}
+		}
+		System.out.println("\n\n\n****Best Configuration: ");
+		bestConfig.printConfig();
+		
 	}
 	
 	
@@ -61,8 +88,9 @@ public class DSpark {
 		@SuppressWarnings("resource")
 		Scanner sc = new Scanner(System.in);
 	
-		System.out.println("Please enter the application deadline");
+		System.out.println("Please enter the application deadline in seconds");
 		deadline=sc.nextInt();
+		deadline/=inputRatio;
 		deadline*=1000;
 		deadline+=268073;
 		System.out.println("Deadline: "+deadline);
