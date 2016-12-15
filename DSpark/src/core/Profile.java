@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Profile {
 
+	public static ConfigurationGenerator configGenObj;
 
 	void profile() {
 
@@ -14,7 +15,7 @@ public class Profile {
 		SettingsLoader.loadSettings();
 
 		Settings.printSettings();
-		ConfigurationGenerator configGenObj = new ConfigurationGenerator();
+		configGenObj = new ConfigurationGenerator();
 		
 		//Prepare Input Using MicroBenachMarking Suits
 
