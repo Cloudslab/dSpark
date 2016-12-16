@@ -65,7 +65,7 @@ public class DSpark {
 			System.out.println("***New Input Directory Size: "+inputSizes[i+1]);
 	
 			Profile.configGenObj.generateSparkSubmitList();
-			Profiler.printConfigList();
+			//Profiler.printConfigList();
 			profDepObj.submitApps();
 			
 		}
@@ -73,7 +73,7 @@ public class DSpark {
 	
 		//Parse the logs for profiling runs of top 3 configs
 		logParserObj.parseLog();
-		
+		Profiler.printConfigList();
 		//curve fit //input size vs completion time 
 		
 		CurveFitter.FitCurves();

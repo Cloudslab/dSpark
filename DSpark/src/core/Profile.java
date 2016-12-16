@@ -27,8 +27,8 @@ public class Profile {
 		configGenObj.generateSparkSubmitList();
 
 		//start profiling of application with generated configurations
-		//ProfilerDeployer profileDeployerObj = new ProfilerDeployer();
-		//profileDeployerObj.submitApps();
+		ProfilerDeployer profileDeployerObj = new ProfilerDeployer();
+		profileDeployerObj.submitApps();
 
 		LogParser logParserObj = new LogParser();
 		logParserObj.parseLog();
