@@ -12,14 +12,14 @@ public class DSpark {
 	static double deadlineThreshold=1.50;
 	static int inputRatio=10;
 	static File inputDirectory;
-	static long[] inputSizes = new long[3];
+	static double[] inputSizes = new double[3];
 	static long applicationInputSize;
 	//Algorithm for Deadline-aware spark applications with optimized cluster usage 
 	static void DSparkAlgo()
 	{
 		
 		ProfilerDeployer profDepObj = new ProfilerDeployer();
-		Configurations bestConfig=new Configurations();
+		//Configurations bestConfig=new Configurations();
 		LogParser logParserObj = new LogParser();
 		//profile the application with the given profiler inputs
 		//generate completion time of the application with each configuration
@@ -39,7 +39,7 @@ public class DSpark {
 		profileTime=0;
 		for(int i=0;i<Profiler.configList.size();i++)
 		{
-			profileTime+=Profiler.configList.get(i).getCompletionTime(0);
+			profileTime+=Profiler.configList.get(i).getCompletionTimei(0);
 	
 		}
 		System.out.println("Profiling Time: "+profileTime);
@@ -55,34 +55,40 @@ public class DSpark {
 		//Now we only have the best 3 configs in terms of the completion time of profiling
 		
 		//Run profiling for 3 different size of inputs for each config
-		inputSizes[0]=inputSize();
-		for(int i=0;i<2;i++)
+		inputSizes[0]=(double)inputSize()/1024.0/1024.0;;
+		for(int i=1;i<3;i++)
 		{
-			System.out.println("\n\n***Re profile with top configs:" );
+			
 			//make profiling input directory 2x of current size
 			make2xInputSize(i);
-			inputSizes[i+1]=(inputSize()/1024)/1024;
-			System.out.println("***New Input Directory Size: "+inputSizes[i+1]);
+			inputSizes[i]=((double)inputSize()/1024.0/1024.0);
+			System.out.println("***Re Profiling Input Directory Size: "+inputSizes[i]+"MB");
 	
 			Profile.configGenObj.generateSparkSubmitList();
 			//Profiler.printConfigList();
 			profDepObj.submitApps();
-			
+			//Parse the logs for profiling runs of this step
+			logParserObj.parseLog();
 		}
 		
 	
-		//Parse the logs for profiling runs of top 3 configs
-		logParserObj.parseLog();
+		//print the top 3 configs with  reprofiling outputs
 		Profiler.printConfigList();
 		//curve fit //input size vs completion time 
 		
 		CurveFitter.FitCurves();
 		//approximate completion time for the whole input
-		
+		System.out.println("Applicaiton Input Size is: "+applicationInputSize*1024+"MB");
+		System.out.println("Profiling input sizes: ");
+				for(int i=0;i<3;i++)
+				{
+					System.out.println(inputSizes[i]+" MB");
+				}
 		for(int i=0;i<Profiler.configList.size();i++)
 		{
 			double totalTime = Profiler.configList.get(i).getP1()*applicationInputSize*1024+Profiler.configList.get(i).getP2();
-			System.out.println(" Predicted time to run the application for config: "+(i+1)+": "+totalTime);
+			System.out.println("Config "+(i+1)+"-> P1: "+Profiler.configList.get(i).getP1()+" P2: "+Profiler.configList.get(i).getP2());
+			System.out.println(" Predicted time for Config-> "+Profiler.configList.get(i).getCore()+" "+Profiler.configList.get(i).getMemory()+" "+Profiler.configList.get(i).getMaxCore()+" is: "+totalTime+" s");
 		}
 		// choose the best config (constraints: deadline, min resource usages)
 		
