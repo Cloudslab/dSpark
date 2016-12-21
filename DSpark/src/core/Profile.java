@@ -28,7 +28,7 @@ public class Profile {
 
 		//start profiling of application with generated configurations
 		ProfilerDeployer profileDeployerObj = new ProfilerDeployer();
-		profileDeployerObj.submitApps();
+		profileDeployerObj.submitApps(0);
 
 		LogParser logParserObj = new LogParser();
 		logParserObj.parseLog();

@@ -1,6 +1,7 @@
 package core;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Scanner;
 
@@ -43,7 +44,7 @@ public class DSpark {
 	
 		}
 		System.out.println("Profiling Time: "+profileTime);
-		
+		int configSizeAtStart=Profiler.configList.size();
 		//Remove all the configs except the top 3
 		if(Profiler.configList.size()>3)
 		{
@@ -64,9 +65,9 @@ public class DSpark {
 			inputSizes[i]=((double)inputSize()/1024.0/1024.0);
 			System.out.println("***Re Profiling Input Directory Size: "+inputSizes[i]+"MB");
 	
-			Profile.configGenObj.generateSparkSubmitList();
+			//Profile.configGenObj.generateSparkSubmitList();
 			//Profiler.printConfigList();
-			profDepObj.submitApps();
+			profDepObj.submitApps(configSizeAtStart++);
 			//Parse the logs for profiling runs of this step
 			logParserObj.parseLog();
 		}
@@ -145,7 +146,7 @@ public class DSpark {
 		for (File file : inputDirectory.listFiles()) {
 	        if (file.isFile())
 	        	//System.out.println("cp "+file+" "+file+"r");
-	            ProfilerDeployer.runCommand("cp "+file+" "+file+i);
+	            runCommand("cp "+file+" "+file+i);
 	       
 	    }
 		
@@ -163,6 +164,27 @@ public class DSpark {
 	    return length;
 	}
 	
+	static void runCommand(String cmd)
+	 	{
+	 		Runtime run = Runtime.getRuntime();
+	 		Process pr = null;
+	 		try {
+	 			pr = run.exec(cmd);
+			} catch (IOException e) {
+	 			// TODO Auto-generated catch block
+	 			e.printStackTrace();
+	 		}
+	 		try {
+	 			pr.waitFor();
+	 			//break;
+			} catch (InterruptedException e) {
+	 		// TODO Auto-generated catch block
+	 			e.printStackTrace();
+	 		}
+	 	}
+
+	
+	@SuppressWarnings("resource")
 	public static void main(String[] args) {
 		/*
 		@SuppressWarnings("resource")
@@ -174,7 +196,7 @@ public class DSpark {
 		deadline*=1000;
 		deadline+=268073;
 		System.out.println("Deadline: "+deadline);*/
-		
+		System.out.println("Please enter the input size of the whole application");
 		Scanner sc = new Scanner(System.in);
 		applicationInputSize = sc.nextLong();
 		
