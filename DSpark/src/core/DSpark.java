@@ -67,7 +67,8 @@ public class DSpark {
 	
 			//Profile.configGenObj.generateSparkSubmitList();
 			//Profiler.printConfigList();
-			profDepObj.submitApps(configSizeAtStart++);
+			profDepObj.submitApps(configSizeAtStart);
+			configSizeAtStart+=3;
 			//Parse the logs for profiling runs of this step
 			logParserObj.parseLog();
 		}
