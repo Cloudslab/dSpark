@@ -11,9 +11,8 @@ public class CurveFitter {
 		{
 			final WeightedObservedPoints obs = new WeightedObservedPoints();
 			// Collect data.
-			obs.add(DSpark.inputSizes[0], Profiler.configList.get(j).getCompletionTimei(0)/1000);
-			obs.add(DSpark.inputSizes[1], Profiler.configList.get(j).getCompletionTimei(1)/1000);
-			obs.add(DSpark.inputSizes[2], Profiler.configList.get(j).getCompletionTimei(2)/1000);
+			for(int i=0;i<DSpark.inputSizes.size();i++)
+			obs.add(DSpark.inputSizes.get(i), Profiler.configList.get(j).getCompletionTimei(i)/1000);
 			
 			// Instantiate a first-degree polynomial fitter.
 			PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);

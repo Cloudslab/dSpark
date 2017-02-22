@@ -2,6 +2,7 @@ package core;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
 
@@ -13,7 +14,8 @@ public class DSpark {
 	static double deadlineThreshold=1.50;
 	static int inputRatio=10;
 	static File inputDirectory;
-	static double[] inputSizes = new double[3];
+	static ArrayList<Double> inputSizes = new ArrayList<Double>();
+	//static double[] inputSizes = new double[3];
 	static long applicationInputSize;
 	//Algorithm for Deadline-aware spark applications with optimized cluster usage 
 	static void DSparkAlgo()
@@ -56,14 +58,14 @@ public class DSpark {
 		//Now we only have the best 3 configs in terms of the completion time of profiling
 		
 		//Run profiling for 3 different size of inputs for each config
-		inputSizes[0]=(double)inputSize()/1024.0/1024.0;;
-		for(int i=1;i<3;i++)
+		inputSizes.add((double)inputSize()/1024.0/1024.0);
+		for(int i=1;i<Settings.reprofileSize;i++)
 		{
 			
 			//make profiling input directory 2x of current size
 			make2xInputSize(i);
-			inputSizes[i]=((double)inputSize()/1024.0/1024.0);
-			System.out.println("***Re Profiling Input Directory Size: "+inputSizes[i]+"MB");
+			inputSizes.add((double)inputSize()/1024.0/1024.0);
+			System.out.println("***Re Profiling Input Directory Size: "+inputSizes.get(i)+"MB");
 	
 			//Profile.configGenObj.generateSparkSubmitList();
 			//Profiler.printConfigList();
@@ -80,11 +82,11 @@ public class DSpark {
 		
 		CurveFitter.FitCurves();
 		//approximate completion time for the whole input
-		System.out.println("Applicaiton Input Size is: "+applicationInputSize*1024+"MB");
+		System.out.println("\n\n***RESULTS***\n\nApplicaiton Input Size is: "+applicationInputSize*1024+"MB");
 		System.out.println("Profiling input sizes: ");
-				for(int i=0;i<3;i++)
+				for(int i=0;i<Settings.reprofileSize;i++)
 				{
-					System.out.println(inputSizes[i]+" MB");
+					System.out.println(inputSizes.get(i)+" MB");
 				}
 		for(int i=0;i<Profiler.configList.size();i++)
 		{
