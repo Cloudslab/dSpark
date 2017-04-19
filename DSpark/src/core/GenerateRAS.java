@@ -2,11 +2,11 @@ package core;
 
 import java.util.ArrayList;
 
-public class Profile {
+public class GenerateRAS {
 
 	public static ConfigurationGenerator configGenObj;
 
-	void profile() {
+	void rasgen() {
 
 		Profiler.configList = new ArrayList<Configurations>();
 		
@@ -26,12 +26,14 @@ public class Profile {
 		configGenObj.generateAppConfig();
 		configGenObj.generateSparkSubmitList();
 
+		/*
 		//start profiling of application with generated configurations
 		ProfilerDeployer profileDeployerObj = new ProfilerDeployer();
 		profileDeployerObj.submitApps(0);
 
 		LogParser logParserObj = new LogParser();
 		logParserObj.parseLog();
+		*/
 
 	}
 }
