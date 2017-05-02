@@ -4,77 +4,88 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
-
 
 public class DSpark {
 
-	static int deadline;
+	static double deadline;
 	static double profileTime;
 	static double deadlineThreshold=1.50;
 	static int inputRatio=10;
 	static File inputDirectory;
-	static ArrayList<Double> inputSizes = new ArrayList<Double>();
+	static ArrayList<Double> inputSizes;
 	//static double[] inputSizes = new double[3];
 	static long applicationInputSize;
 	
-	
-	//Algorithm for Deadline-aware spark applications with optimized cluster usage 
-	static void DSparkAlgo()
+	static void DSparkAlgoLatest()
 	{
 		//generate RAS List
 		GenerateRAS rasgenObj = new GenerateRAS();
 		rasgenObj.rasgen();
-
+		
+		Collections.sort(Profiler.configList, new Configurations());
+		Profiler.printConfigList();
+		Configurations result=null;
+		int left=0,k=0;
+		int right=Profiler.configList.size()-1;
+		while(left<=right)
+		{
+			int mid=left+(right-left)/2;
+			if(Predict(Profiler.configList.get(left),k++)<=deadline)
+			{
+				result=Profiler.configList.get(left);
+				break;
+			}
+			else if(Predict(Profiler.configList.get(mid),k++)<=deadline)
+			{
+				result=Profiler.configList.get(mid);
+				left++;
+				right=mid-1;
+			}
+			else
+				left=mid+1;
+		}
+		System.out.println("Total Profiled RAS: "+(k-1));
+		if(result!=null)
+		{
+			System.out.println("Found Optimal Configuration");
+			result.printConfig();
+		}
+		else
+			System.out.println("No Configurations Found!");
+		
+	}
+	static double Predict(Configurations configObj,int k)
+	{
+		inputSizes = new ArrayList<Double>();
 		ProfilerDeployer profDepObj = new ProfilerDeployer();
 		LogParser logParserObj = new LogParser();
-		inputDirectory = new File(Settings.inputPathProfiler);
-		
-		
-		//profile the application with the given profiler inputs
-		//for(int i=0;i<Settings.reprofileSize;i++)
+		runCommand("rm -rf "+Settings.inputPathProfiler+"/tmpInput");
+		runCommand("mkdir "+Settings.inputPathProfiler+"/tmpInput");
+		copyInput();
+		inputDirectory = new File(Settings.inputPathProfiler+"/tmpInput");
+
 		for(int i=0;i<Settings.reprofileSize;i++)
 		{
 			//make profiling input directory 2x of current size
 			if(i>0)		
 				make2xInputSize(i);
-			
 			inputSizes.add((double)inputSize()/1024.0/1024.0);
-			
 			System.out.println("***Profiling Input Directory Size: "+inputSizes.get(i)+"MB");
 			
-			profDepObj.submitApps(i*Profiler.configList.size()*Settings.reprofileSize);
-			
-			//Parse the logs for profiling runs of this step
+			profDepObj.submitApps(configObj,k*Settings.reprofileSize);
 			logParserObj.parseLog();
-			
-			
-			/*
-			//calculate the total time needed for profiling
-			profileTime=0;
-			for(int j=0;j<Profiler.configList.size();j++)
-			{
-				profileTime+=Profiler.configList.get(j).getCompletionTimei(0);
-
-			}
-			
-			System.out.println("Profiling Time: "+profileTime);
-			*/
 		}
-
-		output();
-		//print the configs with  reprofiling outputs
-		//Profiler.printConfigList();
-
 		System.out.println("\n\n***RESULTS***\n\nApplicaiton Input Size is: "+applicationInputSize*1024+"MB");
 		System.out.println("Profiling input sizes: ");
 		for(int i=0;i<Settings.reprofileSize;i++)
 		{
 			System.out.println(inputSizes.get(i)+" MB");
 		}
-		/*
+		
 		//curve fit //input size vs completion time 
-		CurveFitter.FitCurves();
+		CurveFitter.FitCurves(configObj);
 		//approximate completion time for the whole input
 		System.out.println("\n\n***RESULTS***\n\nApplicaiton Input Size is: "+applicationInputSize*1024+"MB");
 		System.out.println("Profiling input sizes: ");
@@ -82,16 +93,25 @@ public class DSpark {
 		{
 			System.out.println(inputSizes.get(i)+" MB");
 		}
-		for(int i=0;i<Profiler.configList.size();i++)
-		{
-			double totalTime = Profiler.configList.get(i).getP1()*applicationInputSize*1024+Profiler.configList.get(i).getP2();
-			System.out.println("Config "+(i+1)+"-> P1: "+Profiler.configList.get(i).getP1()+" P2: "+Profiler.configList.get(i).getP2());
-			System.out.println(" Predicted time for Config-> "+Profiler.configList.get(i).getCore()+" "+Profiler.configList.get(i).getMemory()+" "+Profiler.configList.get(i).getMaxCore()+" is: "+totalTime+" s");
-		}
-		*/
-
+	
+		double totalTime = configObj.getP1()*applicationInputSize*1024+configObj.getP2();
+		System.out.println("Config coeffs:"+"-> P1: "+configObj.getP1()+" P2: "+configObj.getP2());
+		System.out.println(" Predicted time for Config-> "+configObj.getCore()+" "+configObj.getMemory()+" "+configObj.getMaxCore()+" is: "+totalTime+" s");
+		
+		
+		return totalTime;	
 	}
 
+	private static void copyInput() {
+		inputDirectory = new File(Settings.inputPathProfiler);
+		for (File file : inputDirectory.listFiles()) {
+			if (file.isFile())
+			{
+				runCommand("cp "+file+" "+Settings.inputPathProfiler+"/tmpInput/"+file.getName());
+			}
+		}
+	}
+	
 	private static void make2xInputSize(int i) {
 		for (File file : inputDirectory.listFiles()) {
 			if (file.isFile())
@@ -106,9 +126,10 @@ public class DSpark {
 		for (File file : inputDirectory.listFiles()) {
 			if (file.isFile())
 				length += file.length();
-			else
-				length += inputSize();
+			//else
+				//length += inputSize();
 		}
+		System.out.println("File Length: "+length);
 		return length;
 	}
 
@@ -139,8 +160,6 @@ public class DSpark {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	
-	
 	}
 	static void runCommand(String cmd)
 	{
@@ -160,25 +179,14 @@ public class DSpark {
 			e.printStackTrace();
 		}
 	}
-
-
-	@SuppressWarnings("resource")
 	public static void main(String[] args) {
-		/*
+		System.out.println("Please enter the input size of the whole application");
 		@SuppressWarnings("resource")
 		Scanner sc = new Scanner(System.in);
-
-		System.out.println("Please enter the application deadline in seconds");
-		deadline=sc.nextInt();
-		deadline/=inputRatio;
-		deadline*=1000;
-		deadline+=268073;
-		System.out.println("Deadline: "+deadline);*/
-		System.out.println("Please enter the input size of the whole application");
-		Scanner sc = new Scanner(System.in);
 		applicationInputSize = sc.nextLong();
-
-		DSparkAlgo();
+		System.out.println("Please enter the Deadline of the application");
+		deadline=sc.nextDouble();
+		DSparkAlgoLatest();
 
 	}
 }
