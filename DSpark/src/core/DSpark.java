@@ -17,7 +17,7 @@ public class DSpark {
 	static ArrayList<Double> inputSizes;
 	//static double[] inputSizes = new double[3];
 	static long applicationInputSize;
-	
+	/*
 	static void DSparkAlgoLatest()
 	{
 		//generate RAS List
@@ -55,6 +55,20 @@ public class DSpark {
 		else
 			System.out.println("No Configurations Found!");
 		
+	}*/
+	static void DSparkAlgoLatest()
+	{
+		//generate RAS List
+		GenerateRAS rasgenObj = new GenerateRAS();
+		rasgenObj.rasgen();
+		for(int i=0;i<Profiler.configList.size();i++)
+		{
+			double T= Predict(Profiler.configList.get(i),i);
+			double cost=Profiler.configList.get(i).getCost();
+			Profiler.configList.get(i).setCost(cost*T);
+		}
+		Collections.sort(Profiler.configList, new Configurations());
+		Profiler.printConfigList();
 	}
 	static double Predict(Configurations configObj,int k)
 	{
